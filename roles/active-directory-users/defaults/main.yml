@@ -1,0 +1,7 @@
+ad_groups:
+  - "General"
+  - "Admins"
+ad_users:
+  - { user: admin_user, groups: ["Admins"] }
+  - { user: general_user, groups: ["General"] }
+  - { user: admin_and_general, groups: ["Admins", "General"] }
