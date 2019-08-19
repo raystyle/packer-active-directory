@@ -1,0 +1,14 @@
+- block:
+    - name: Get AD Users
+      win_shell: Get-ADUser -Filter *
+    - set_fact:
+        AD_WORKS: True
+  rescue:
+    - name: Restart Active Directory Service
+      win_service:
+        name: ADWS
+        state: restarted
+        start_mode: auto
+    - pause:
+        seconds: 30
+  when: not AD_WORKS

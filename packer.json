@@ -1,0 +1,95 @@
+{
+	"variables": {
+		"environment": "",
+		"app": "",
+		"instance_type": "t2.nano",
+		"domain": "example.com",
+		"netbios": "example"
+	},
+	"builders": [
+		{
+			"type": "amazon-ebs",
+			"instance_type": "{{ user `instance_type` }}",
+			"ami_name": "windows-ad-{{timestamp}}",
+			"ami_description": "Windows Active Directory",
+			"user_data_file": "./scripts/ec2-userdata.ps1",
+			"communicator": "winrm",
+			"winrm_username": "Administrator",
+			"winrm_use_ssl": true,
+			"winrm_insecure": true,
+			"source_ami_filter": {
+				"filters": {
+					"virtualization-type": "hvm",
+					"root-device-type": "ebs",
+					"name": "Windows_Server-2016-English-Full-Base-*"
+				},
+				"owners": [
+					"801119661308"
+				],
+				"most_recent": true
+			},
+			"tags": {
+				"environment": "{{ user `environment`}}",
+				"application": "{{ user `app`}}"
+			}
+		}
+	],
+	"provisioners": [
+		{
+			"type": "ansible",
+			"playbook_file": "./playbooks/main.yml",
+			"extra_arguments": [
+				"--connection",
+				"packer",
+				"--extra-vars",
+				"ansible_shell_type=powershell ansible_shell_executable=None",
+				"--tags",
+				"aws-ssm-agent"
+			],
+			"ansible_env_vars": [
+				"WINRM_PASSWORD={{.WinRMPassword}}"
+			]
+		},
+		{
+			"type": "ansible",
+			"playbook_file": "./playbooks/main.yml",
+			"extra_arguments": [
+				"--connection",
+				"packer",
+				"--extra-vars",
+				"ansible_shell_type=powershell ansible_shell_executable=None domain={{ user `domain` }} netbios={{ user `netbios` }}",
+				"--tags",
+				"active-directory"
+			],
+			"ansible_env_vars": [
+				"WINRM_PASSWORD={{.WinRMPassword}}"
+			]
+		},
+		{
+			"type": "windows-restart"
+		},
+		{
+			"type": "ansible",
+			"playbook_file": "./playbooks/main.yml",
+			"extra_arguments": [
+				"--connection",
+				"packer",
+				"--extra-vars",
+				"ansible_shell_type=powershell ansible_shell_executable=None domain={{ user `domain` }}",
+				"--tags",
+				"active-directory-users"
+			],
+			"ansible_env_vars": [
+				"WINRM_PASSWORD={{.WinRMPassword}}"
+			]
+		},
+		{
+			"type": "powershell",
+			"inline": [
+				"C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\SendWindowsIsReady.ps1 -Schedule",
+				"C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\InitializeInstance.ps1 -Schedule",
+				"C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\SysprepInstance.ps1 -NoShutdown"
+			]
+		}
+	]
+}

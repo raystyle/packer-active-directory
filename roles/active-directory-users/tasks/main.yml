@@ -1,0 +1,37 @@
+---
+- name: break domain in dc_domain_path if domain_name is defined
+  set_fact:
+    dc_domain_path: "{{ dc_domain_path | default('') }},DC={{item}}"
+  with_items: "{{ domain_name.split('.') }}"
+  when: domain_name is defined
+
+- name: Strip leading comma from dc_domain_path
+  set_fact:
+    dc_domain_path: "{{ dc_domain_path[1:] }}"
+  when: domain_name is defined and dc_domain_path[0] == ','
+
+- name: Initialize AD_WORKS
+  set_fact:
+    AD_WORKS: False
+
+- name: Check AD Service is working by Getting Users
+  include: './ensure_running.yml'
+  with_sequence: start=0 end=30
+
+- name: Create Active Directory User Groups
+  win_domain_group:
+    name: "{{ item }}"
+    scope: global
+    path: "CN=Users,{{ dc_domain_path }}"
+  with_items: "{{ ad_groups }}"
+
+# The users variable will contain a dictionary list:
+# ex. - { user: fakeuser, groups: ["groupa"] }
+- name: Create Users
+  win_domain_user:
+    name: "{{ item.user }}"
+    password: default1!
+    state: present
+    path: "CN=Users,{{ dc_domain_path }}"
+    groups: "{{ item.groups }}"
+  with_items: "{{ ad_users }}"

@@ -1,0 +1,10 @@
+- name: Install SSM
+  win_package:
+    path: https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe
+    product_id: ssm
+    arguments: /q /install /norestart
+
+- name: Restart SSM Manager
+  win_service:
+    name: AmazonSSMAgent
+    state: started

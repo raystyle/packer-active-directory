@@ -1,0 +1,26 @@
+- hosts: all
+  gather_facts: False
+  roles:
+    - role: aws-ssm-agent
+      tags:
+        - 'aws-ssm-agent'
+    - role: active-directory
+      tags:
+        - 'active-directory'
+      vars:
+        domain_name: "{{ domain }}"
+        netbios_name: "{{ netbios }}"
+        safe_mode_password: "default1!"
+    - role: active-directory-users
+      tags:
+        - 'active-directory-users'
+      vars:
+        domain_name: "{{ domain }}"
+        ad_groups:
+          - "General"
+          - "Admins"
+        ad_users:
+          - { user: admin_user, groups: ["Admins"] }
+          - { user: general_user, groups: ["General"] }
+          - { user: admin_and_general, groups: ["Admins", "General"] }
+
