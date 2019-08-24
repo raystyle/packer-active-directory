@@ -14,6 +14,7 @@ Ensure you have `pywinrm` installed before attempting to run.
 |instance_type| EC2 Instance Type|
 |domain|dns domain for active directory|
 |netbios|netbios name for active directory|
+|dns_resolver|the IPv4DNSResolver to be utilized from the clone.|
 |app|utilized for tags|
 |environment|utilized for tags|
 

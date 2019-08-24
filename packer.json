@@ -4,7 +4,8 @@
 		"app": "",
 		"instance_type": "t2.nano",
 		"domain": "example.com",
-		"netbios": "example"
+		"netbios": "example",
+		"dns_resolver": "10.0.0.1"
 	},
 	"builders": [
 		{
@@ -82,6 +83,15 @@
 			"ansible_env_vars": [
 				"WINRM_PASSWORD={{.WinRMPassword}}"
 			]
+		},
+		{
+			"type": "powershell",
+			"inline": [
+				"Add-ADGroupMember -Identity 'Cloneable Domain Controllers' -Members (Get-ADComputer -Filter *).SAMAccountName -PassThru",
+				"Get-ADDCCloningExcludedApplicationList -GenerateXml",
+    				"New-ADDCCloneConfigFile -IPv4DNSResolver {{ user `dns_resolver` }} -SiteName {{ user `domain` }}"
+			],
+			"pause_before": "30s"
 		},
 		{
 			"type": "powershell",
